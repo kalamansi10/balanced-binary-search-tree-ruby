@@ -17,6 +17,7 @@ class Tree
         @root = build_tree(array)
     end
     def build_tree(array)
+        array = array.uniq.sort
         mid = array.length / 2
         return root = Node.new(array[0]) if array[0] == array[-1]
         root = Node.new(array[mid])
@@ -25,6 +26,7 @@ class Tree
         root
     end
     def insert(input)
+        return if level_order.any?(input)
         input_node = Node.new(input)
         insert_node(input_node)
     end
@@ -98,7 +100,7 @@ class Tree
         until !queue[0]
             node = queue[0]
             yield queue[0] if block_given?
-            data_array << queue[0].data
+            data_array << queue[0].data unless !node.data
             queue << node.left
             queue << node.right
             queue.shift
@@ -108,25 +110,25 @@ class Tree
     def inorder(&block)
         node = root
         data_array = []
-        p block if block_given?
+        block if block_given?
         inorder_search(node, data_array, &block)
         data_array unless block_given?
     end
     def inorder_search(node, data_array, &block)
         inorder_search(node.left, data_array, &block) unless !node.left
-        data_array << node.data
+        data_array << node.data unless !node.data
         block.call(node) if block_given?
         inorder_search(node.right, data_array, &block) unless !node.right
     end
     def preorder(&block)
         node = root
         data_array = []
-        p block if block_given?
+        block if block_given?
         preorder_search(node, data_array, &block)
         data_array unless block_given?
     end
     def preorder_search(node, data_array, &block)
-        data_array << node.data
+        data_array << node.data unless !node.data
         block.call(node) if block_given?
         preorder_search(node.left, data_array, &block) unless !node.left
         preorder_search(node.right, data_array, &block) unless !node.right
@@ -134,40 +136,105 @@ class Tree
     def postorder(&block)
         node = root
         data_array = []
-        p block if block_given?
+        block if block_given?
         postorder_search(node, data_array, &block)
         data_array unless block_given?
     end
     def postorder_search(node, data_array, &block)
         postorder_search(node.left, data_array, &block) unless !node.left
         postorder_search(node.right, data_array, &block) unless !node.right
-        data_array << node.data
+        data_array << node.data unless !node.data
         block.call(node) if block_given?
+    end
+    def height(input)
+        node = root
+        input_node = Node.new(input)
+        counter = 0
+        lsub = []
+        rsub = []
+        leaves_depth(node, counter, lsub, rsub)
+        deepest = (lsub + rsub).max
+        deepest - input_depth(input_node)
+    end
+    def leaves_depth(node, counter, lsub, rsub)
+        if node.left
+            counter += 1 
+            leaves_depth(node.left, counter, lsub, rsub)
+            lsub << counter
+        end
+        counter -= 1 if node.left
+        if node.right
+            counter += 1 
+            leaves_depth(node.right, counter, lsub, rsub)
+            rsub << counter
+        end
+    end
+    def depth(input)
+        input_node = Node.new(input)
+        input_depth(input_node)
+    end
+    def input_depth(input_node)
+        node = root
+        counter = 0
+        until input_node == node
+            counter
+            if node > input_node 
+                node = node.left
+                counter += 1 
+            end
+            if node < input_node
+                node = node.right
+                counter += 1 
+            end
+        end
+        counter
+    end
+    def balanced?
+        node = root
+        counter = 0
+        lsub = []
+        rsub = []
+        leaves_depth(node, counter, lsub, rsub)
+        lsub = lsub.sort
+        rsub = rsub.sort
+        if lsub.count(lsub[-1]) == rsub.count(rsub[-1]) && lsub.count(lsub[-2]) == rsub.count(rsub[-2])
+            true
+        else
+            false
+        end
+    end
+    def rebalance
+        @root = build_tree(level_order)
     end
     def pretty_print(node = root, prefix = '', is_left = true)
         pretty_print(node.right, "#{prefix}#{is_left ? '│   ' : '    '}", false) if node.right
         puts "#{prefix}#{is_left ? '└── ' : '┌── '}#{node.data}"
         pretty_print(node.left, "#{prefix}#{is_left ? '    ' : '│   '}", true) if node.left
     end
-    
 end
 
-bin_tree = Tree.new([9,8,7,6,5,4,3,2,1])
-bin_tree.insert(3)
-bin_tree.insert(2)
+bin_tree = Tree.new((Array.new(15) { rand(1..100) }))
 bin_tree.pretty_print
-i = bin_tree.find(5)
-p bin_tree.height(i)
+p bin_tree.balanced?
+p bin_tree.preorder
+p bin_tree.postorder
+p bin_tree.inorder
+bin_tree.insert(rand(1..100))
+bin_tree.insert(rand(1..100))
+bin_tree.insert(rand(1..100))
+bin_tree.insert(rand(1..100))
+bin_tree.insert(rand(1..100))
+bin_tree.pretty_print
+p bin_tree.balanced?
+bin_tree.rebalance
+bin_tree.pretty_print
+p bin_tree.balanced?
+p bin_tree.preorder
+p bin_tree.postorder
+p bin_tree.inorder
 
 
-# bin_tree = Tree.new([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
-# bin_tree = Tree.new([1,4,7,10,13,16,19])
-# bin_tree.pretty_print
-# bin_tree.insert(5)
-# bin_tree.insert(3)
-# bin_tree.insert(2)
-# bin_tree.pretty_print
-# bin_tree.delete(2)
-# bin_tree.pretty_print
-# bin_tree.level_order
+
+
+
 
